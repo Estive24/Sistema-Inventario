@@ -1,0 +1,66 @@
+﻿# Django y extensiones
+Django==4.2.7
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+django-filter==23.3
+django-extensions==3.2.3
+
+# Base de datos
+psycopg2-binary==2.9.7
+
+# Autenticación (ya incluida en DRF - no necesita paquete adicional)
+# djangorestframework-authtoken==1.0.0  # REMOVIDO - no existe
+
+# Seguridad
+cryptography==41.0.7
+
+# Manejo de archivos y medios
+Pillow==10.0.1
+python-magic==0.4.27
+
+# Utilidades
+python-decouple==3.8
+python-dotenv==1.0.0
+
+# Tareas asíncronas (opcional para esta versión)
+# celery==5.3.4
+# redis==5.0.1
+
+# Validación y serialización
+# marshmallow==3.20.1  # No necesario con DRF
+# jsonschema==4.19.2   # No necesario para esta versión
+
+# Reportes y exportación
+openpyxl==3.1.2
+# reportlab==4.0.5     # Opcional para esta versión
+# xlsxwriter==3.1.9    # Opcional para esta versión
+
+# Fechas y tiempo
+python-dateutil==2.8.2
+pytz==2023.3
+
+# Email (opcional para esta versión)
+# django-email-verification==0.3.4
+
+# Logging y monitoreo (opcional)
+# django-debug-toolbar==4.2.0
+# sentry-sdk==1.38.0
+
+# Testing (opcional para desarrollo)
+# factory-boy==3.3.0
+# faker==19.12.0
+
+# Desarrollo (opcional)
+# black==23.9.1
+# flake8==6.1.0
+# pre-commit==3.5.0
+
+# Servidor de producción
+gunicorn==21.2.0
+whitenoise==6.6.0
+
+# Tareas programadas (opcional)
+# django-crontab==0.7.1
+
+# API Documentation
+drf-spectacular==0.26.5

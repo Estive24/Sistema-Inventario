@@ -1,0 +1,59 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import './App.css';
+
+// Tema de Material-UI
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1976d2',
+    },
+    secondary: {
+      main: '#dc004e',
+    },
+  },
+});
+
+// Componente temporal de bienvenida
+function Welcome() {
+  return (
+    <div style={{ 
+      padding: '2rem', 
+      textAlign: 'center',
+      fontFamily: 'Roboto, sans-serif' 
+    }}>
+      <h1>🎉 Sistema de Inventario</h1>
+      <p>¡Aplicación iniciada exitosamente!</p>
+      <p>Backend Django conectado en puerto 8000</p>
+      <p>Frontend React ejecutándose en puerto 3000</p>
+      <div style={{ marginTop: '2rem' }}>
+        <h3>🚀 Próximos pasos:</h3>
+        <ul style={{ textAlign: 'left', maxWidth: '500px', margin: '0 auto' }}>
+          <li>Crear super usuario en Django</li>
+          <li>Configurar autenticación</li>
+          <li>Agregar páginas de gestión</li>
+          <li>Implementar funcionalidades del inventario</li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
+        <div className="App">
+          <Routes>
+            <Route path="/" element={<Welcome />} />
+          </Routes>
+        </div>
+      </Router>
+    </ThemeProvider>
+  );
+}
+
+export default App;

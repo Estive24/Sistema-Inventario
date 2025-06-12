@@ -1,0 +1,22 @@
+﻿# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual Environment
+venv/
+env/
+
+# Node modules (muy pesado)
+node_modules/
+
+# Bases de datos SQLite
+*.sqlite3
+db.sqlite3
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log

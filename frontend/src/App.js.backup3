@@ -1,0 +1,189 @@
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { Box, CircularProgress, Typography } from '@mui/material';
+import { Toaster } from 'react-hot-toast';
+import './App.css';
+
+// Importar contextos
+import { AuthProvider } from './contexts/AuthContext';
+
+// Importar componentes
+import AdminSetupMUI from './components/AdminSetupMUI';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// Importar páginas existentes
+import Dashboard from './pages/Dashboard';
+import Repuestos from './pages/Repuestos';
+
+// Tema de Material-UI
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1976d2',
+    },
+    secondary: {
+      main: '#dc004e',
+    },
+  },
+});
+
+// Componente de carga del sistema
+function SystemLoading() {
+  return (
+    <Box 
+      display="flex" 
+      flexDirection="column"
+      alignItems="center" 
+      justifyContent="center" 
+      minHeight="100vh"
+      bgcolor="background.default"
+    >
+      <CircularProgress size={60} sx={{ mb: 3 }} />
+      <Typography variant="h6" color="text.secondary">
+        Inicializando sistema...
+      </Typography>
+    </Box>
+  );
+}
+
+// Componente principal de rutas
+function AppRoutes() {
+  const [systemState, setSystemState] = useState({
+    initialized: null, // null = checking, true = initialized, false = needs setup
+    loading: true
+  });
+
+  useEffect(() => {
+    checkSystemStatus();
+  }, []);
+
+  const checkSystemStatus = async () => {
+    try {
+      const response = await fetch('/api/setup/admin/', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSystemState({
+          initialized: data.super_admin_exists,
+          loading: false
+        });
+      } else {
+        // En caso de error, asumir que necesita configuración
+        setSystemState({
+          initialized: false,
+          loading: false
+        });
+      }
+    } catch (error) {
+      console.error('Error verificando estado del sistema:', error);
+      setSystemState({
+        initialized: false,
+        loading: false
+      });
+    }
+  };
+
+  if (systemState.loading) {
+    return <SystemLoading />;
+  }
+
+  return (
+    <Routes>
+      {/* Ruta de configuración inicial */}
+      <Route 
+        path="/setup" 
+        element={
+          systemState.initialized ? 
+            <Navigate to="/dashboard" replace /> : 
+            <AdminSetupMUI />
+        } 
+      />
+      
+      {/* Rutas principales de la aplicación (protegidas) */}
+      <Route 
+        path="/dashboard" 
+        element={
+          systemState.initialized ? 
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute> : 
+            <Navigate to="/setup" replace />
+        } 
+      />
+      
+      <Route 
+        path="/repuestos" 
+        element={
+          systemState.initialized ? 
+            <ProtectedRoute>
+              <Repuestos />
+            </ProtectedRoute> : 
+            <Navigate to="/setup" replace />
+        } 
+      />
+      
+      {/* Ruta por defecto */}
+      <Route 
+        path="/" 
+        element={
+          <Navigate 
+            to={systemState.initialized ? "/dashboard" : "/setup"} 
+            replace 
+          />
+        } 
+      />
+      
+      {/* Ruta 404 */}
+      <Route 
+        path="*" 
+        element={
+          <Navigate 
+            to={systemState.initialized ? "/dashboard" : "/setup"} 
+            replace 
+          />
+        } 
+      />
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AuthProvider>
+        <Router>
+          <div className="App">
+            <AppRoutes />
+            {/* Toaster para notificaciones */}
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: '#363636',
+                  color: '#fff',
+                },
+                success: {
+                  duration: 3000,
+                  theme: {
+                    primary: '#4aed88',
+                  },
+                },
+              }}
+            />
+          </div>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
+  );
+}
+
+export default App;

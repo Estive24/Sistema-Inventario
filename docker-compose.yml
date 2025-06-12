@@ -1,0 +1,67 @@
+﻿services:
+  # Base de datos PostgreSQL
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: inventario_db
+      POSTGRES_USER: inventario_user
+      POSTGRES_PASSWORD: inventario_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - inventario_network
+    restart: unless-stopped
+
+  # Backend Django
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - DEBUG=1
+      - DB_HOST=db
+      - DB_NAME=inventario_db
+      - DB_USER=inventario_user
+      - DB_PASSWORD=inventario_pass
+      - DB_PORT=5432
+      - DJANGO_SECRET_KEY=tu-clave-secreta-desarrollo
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,backend
+    volumes:
+      - ./backend:/app
+      - media_files:/app/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    networks:
+      - inventario_network
+    restart: unless-stopped
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - REACT_APP_ENVIRONMENT=development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - inventario_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  media_files:
+
+networks:
+  inventario_network:
+    driver: bridge
