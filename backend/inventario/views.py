@@ -3,6 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db import transaction
+from datetime import timedelta
 from django.db.models import Q, Sum, Count, F
 from django.utils import timezone
 from .models import Repuesto, MovimientoInventario, AlertaStock
@@ -189,6 +191,269 @@ class RepuestoViewSet(viewsets.ModelViewSet):
         
         return Response({'message': 'Ajuste realizado exitosamente'})
 
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Eliminar repuesto con lógica especial para Super Administrador
+        """
+        repuesto = self.get_object()
+        user = request.user
+        
+        # ✅ VERIFICACIÓN DE PERMISOS
+        is_super_admin = (user.is_superuser or 
+                         (hasattr(user, 'rol') and user.rol == 'SUPER_ADMIN'))
+        is_encargado_bodega = (user.groups.filter(name='Encargado de Bodega').exists() or
+                              (hasattr(user, 'rol') and user.rol == 'ENCARGADO_BODEGA'))
+        
+        if not (is_super_admin or is_encargado_bodega):
+            return Response(
+                {'error': 'Solo super administradores y encargados de bodega pueden eliminar repuestos'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # 🔥 LÓGICA ESPECIAL: Super Admin puede eliminar SIN validaciones
+        if is_super_admin:
+            try:
+                with transaction.atomic():
+                    repuesto_info = {
+                        'id': repuesto.id,
+                        'nombre': repuesto.nombre,
+                        'marca': repuesto.marca,
+                        'modelo': repuesto.modelo,
+                        'stock_actual': repuesto.stock_actual,
+                        'movimientos_count': MovimientoInventario.objects.filter(repuesto=repuesto).count(),
+                        'alertas_count': AlertaStock.objects.filter(repuesto=repuesto).count()
+                    }
+                    
+                    # Eliminar TODAS las alertas relacionadas
+                    AlertaStock.objects.filter(repuesto=repuesto).delete()
+                    
+                    # Eliminar TODOS los movimientos relacionados
+                    MovimientoInventario.objects.filter(repuesto=repuesto).delete()
+                    
+                    # Eliminar el repuesto
+                    repuesto.delete()
+                    
+                    # Log especial para Super Admin
+                    print(f"🔥 ELIMINACIÓN FORZADA POR SUPER ADMIN: {repuesto_info['nombre']} (ID: {repuesto_info['id']})")
+                    print(f"   Stock eliminado: {repuesto_info['stock_actual']}")
+                    print(f"   Movimientos eliminados: {repuesto_info['movimientos_count']}")
+                    print(f"   Alertas eliminadas: {repuesto_info['alertas_count']}")
+                    print(f"   Usuario: {user.username}")
+                    
+                    return Response({
+                        'message': f'Repuesto "{repuesto_info["nombre"]}" eliminado FORZADAMENTE por Super Administrador',
+                        'deleted_repuesto': repuesto_info,
+                        'forced_deletion': True,
+                        'deleted_items': {
+                            'movimientos': repuesto_info['movimientos_count'],
+                            'alertas': repuesto_info['alertas_count'],
+                            'stock_perdido': repuesto_info['stock_actual']
+                        }
+                    }, status=status.HTTP_200_OK)
+                    
+            except Exception as e:
+                print(f"❌ ERROR en eliminación forzada: {e}")
+                return Response({
+                    'error': f'Error interno en eliminación forzada: {str(e)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # 📋 VALIDACIONES NORMALES para Encargado de Bodega
+        validation_errors = []
+        
+        # 1. Verificar stock actual
+        if repuesto.stock_actual > 0:
+            validation_errors.append(f'No se puede eliminar: el repuesto tiene stock actual de {repuesto.stock_actual} {repuesto.unidad_medida}')
+        
+        # 2. Verificar movimientos recientes (últimos 30 días)
+        fecha_limite = timezone.now() - timedelta(days=30)
+        movimientos_recientes = MovimientoInventario.objects.filter(
+            repuesto=repuesto,
+            fecha_movimiento__gte=fecha_limite
+        ).count()
+        
+        if movimientos_recientes > 0:
+            validation_errors.append(f'No se puede eliminar: el repuesto tiene {movimientos_recientes} movimientos en los últimos 30 días')
+        
+        # 3. Verificar alertas pendientes
+        alertas_pendientes = AlertaStock.objects.filter(
+            repuesto=repuesto,
+            estado__in=['PENDIENTE', 'NOTIFICADA']
+        ).count()
+        
+        if alertas_pendientes > 0:
+            validation_errors.append(f'No se puede eliminar: el repuesto tiene {alertas_pendientes} alertas pendientes')
+        
+        # Si hay errores de validación para Encargado de Bodega
+        if validation_errors:
+            return Response({
+                'error': 'No se puede eliminar el repuesto',
+                'validation_errors': validation_errors,
+                'can_delete': False,
+                'user_role': 'ENCARGADO_BODEGA'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # ✅ ELIMINAR NORMAL para Encargado de Bodega (con validaciones pasadas)
+        try:
+            with transaction.atomic():
+                repuesto_info = {
+                    'id': repuesto.id,
+                    'nombre': repuesto.nombre,
+                    'marca': repuesto.marca,
+                    'modelo': repuesto.modelo
+                }
+                
+                # Solo eliminar alertas resueltas
+                AlertaStock.objects.filter(repuesto=repuesto, estado='RESUELTA').delete()
+                
+                # Eliminar el repuesto
+                repuesto.delete()
+                
+                # Log normal
+                print(f"✅ ELIMINACIÓN NORMAL: {repuesto_info['nombre']} (ID: {repuesto_info['id']}) por: {user.username}")
+                
+                return Response({
+                    'message': f'Repuesto "{repuesto_info["nombre"]}" eliminado exitosamente',
+                    'deleted_repuesto': repuesto_info,
+                    'forced_deletion': False
+                }, status=status.HTTP_200_OK)
+                
+        except Exception as e:
+            print(f"❌ ERROR eliminando repuesto: {e}")
+            return Response({
+                'error': f'Error interno eliminando repuesto: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['get'])
+    def validate_delete(self, request, pk=None):
+        """
+        Validar eliminación con lógica especial para Super Administrador
+        """
+        repuesto = self.get_object()
+        user = request.user
+        
+        # Identificar tipo de usuario
+        is_super_admin = (user.is_superuser or 
+                         (hasattr(user, 'rol') and user.rol == 'SUPER_ADMIN'))
+        is_encargado_bodega = (user.groups.filter(name='Encargado de Bodega').exists() or
+                              (hasattr(user, 'rol') and user.rol == 'ENCARGADO_BODEGA'))
+        
+        if not (is_super_admin or is_encargado_bodega):
+            return Response({
+                'can_delete': False,
+                'permission_error': 'Sin permisos para eliminar repuestos',
+                'user_role': 'NO_PERMISSION'
+            })
+        
+        # 🔥 SUPER ADMIN: Puede eliminar TODO siempre
+        if is_super_admin:
+            # Calcular información de impacto
+            total_movimientos = MovimientoInventario.objects.filter(repuesto=repuesto).count()
+            total_alertas = AlertaStock.objects.filter(repuesto=repuesto).count()
+            alertas_pendientes = AlertaStock.objects.filter(
+                repuesto=repuesto,
+                estado__in=['PENDIENTE', 'NOTIFICADA']
+            ).count()
+            
+            # Movimientos recientes
+            fecha_limite = timezone.now() - timedelta(days=30)
+            movimientos_recientes = MovimientoInventario.objects.filter(
+                repuesto=repuesto,
+                fecha_movimiento__gte=fecha_limite
+            ).count()
+            
+            return Response({
+                'can_delete': True,
+                'user_role': 'SUPER_ADMIN',
+                'forced_deletion': True,
+                'impact_warning': {
+                    'stock_actual': repuesto.stock_actual,
+                    'total_movimientos': total_movimientos,
+                    'movimientos_recientes': movimientos_recientes,
+                    'total_alertas': total_alertas,
+                    'alertas_pendientes': alertas_pendientes
+                },
+                'repuesto_info': {
+                    'id': repuesto.id,
+                    'nombre': repuesto.nombre,
+                    'marca': repuesto.marca,
+                    'modelo': repuesto.modelo,
+                    'stock_actual': repuesto.stock_actual,
+                    'unidad_medida': repuesto.unidad_medida,
+                    'activo': repuesto.activo
+                }
+            })
+        
+        # 📋 ENCARGADO DE BODEGA: Validaciones normales
+        validation_errors = []
+        warnings = []
+        
+        # Stock actual
+        if repuesto.stock_actual > 0:
+            validation_errors.append({
+                'type': 'stock_actual',
+                'message': f'Tiene stock actual de {repuesto.stock_actual} {repuesto.unidad_medida}'
+            })
+        
+        # Movimientos recientes
+        fecha_limite = timezone.now() - timedelta(days=30)
+        movimientos_recientes = MovimientoInventario.objects.filter(
+            repuesto=repuesto,
+            fecha_movimiento__gte=fecha_limite
+        ).count()
+        
+        if movimientos_recientes > 0:
+            validation_errors.append({
+                'type': 'movimientos_recientes',
+                'message': f'Tiene {movimientos_recientes} movimientos en los últimos 30 días'
+            })
+        
+        # Total de movimientos (para información)
+        total_movimientos = MovimientoInventario.objects.filter(repuesto=repuesto).count()
+        if total_movimientos > 0:
+            warnings.append({
+                'type': 'historial_movimientos',
+                'message': f'Se eliminarán {total_movimientos} movimientos históricos'
+            })
+        
+        # Alertas pendientes
+        alertas_pendientes = AlertaStock.objects.filter(
+            repuesto=repuesto,
+            estado__in=['PENDIENTE', 'NOTIFICADA']
+        ).count()
+        
+        if alertas_pendientes > 0:
+            validation_errors.append({
+                'type': 'alertas_pendientes',
+                'message': f'Tiene {alertas_pendientes} alertas pendientes'
+            })
+        
+        # Alertas históricas
+        alertas_historicas = AlertaStock.objects.filter(repuesto=repuesto).count()
+        if alertas_historicas > 0:
+            warnings.append({
+                'type': 'historial_alertas',
+                'message': f'Se eliminarán {alertas_historicas} alertas históricas'
+            })
+        
+        can_delete = len(validation_errors) == 0
+        
+        return Response({
+            'can_delete': can_delete,
+            'user_role': 'ENCARGADO_BODEGA',
+            'forced_deletion': False,
+            'validation_errors': validation_errors,
+            'warnings': warnings,
+            'repuesto_info': {
+                'id': repuesto.id,
+                'nombre': repuesto.nombre,
+                'marca': repuesto.marca,
+                'modelo': repuesto.modelo,
+                'stock_actual': repuesto.stock_actual,
+                'unidad_medida': repuesto.unidad_medida,
+                'activo': repuesto.activo
+            }
+        })
 
 class MovimientoInventarioViewSet(viewsets.ModelViewSet):
     """

@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { inventoryService } from '../services/inventoryService';
 
-const RepuestosTable = ({ onCreateNew, onEdit, onEntradaStock, onAjusteStock }) => {
+const RepuestosTable = ({ 
+  onCreateNew, 
+  onEdit, 
+  onEntradaStock, 
+  onAjusteStock, 
+  onDelete // ✅ NUEVO: Agregar prop para manejar eliminación
+}) => {
   const [repuestos, setRepuestos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -10,8 +16,16 @@ const RepuestosTable = ({ onCreateNew, onEdit, onEntradaStock, onAjusteStock }) 
     necesita_reposicion: ''
   });
 
+  // ✅ NUEVO: Verificar permisos de eliminación
+  const [canDelete, setCanDelete] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false); // 🔥 NUEVO
+
   useEffect(() => {
     loadRepuestos();
+    
+    // ✅ NUEVO: Verificar permisos al montar el componente
+    setCanDelete(inventoryService.canUserDeleteRepuestos());
+    setIsSuperAdmin(inventoryService.isSuperAdmin()); // 🔥 NUEVO
   }, [filters]);
 
   const loadRepuestos = async () => {
@@ -49,6 +63,15 @@ const RepuestosTable = ({ onCreateNew, onEdit, onEntradaStock, onAjusteStock }) 
       currency: 'CLP',
       minimumFractionDigits: 0
     }).format(value);
+  };
+
+  // ✅ NUEVO: Función para manejar eliminación
+  const handleDeleteRepuesto = (repuesto) => {
+    if (!canDelete) {
+      alert('No tienes permisos para eliminar repuestos');
+      return;
+    }
+    onDelete(repuesto);
   };
 
   if (loading) {
@@ -185,6 +208,16 @@ const RepuestosTable = ({ onCreateNew, onEdit, onEntradaStock, onAjusteStock }) 
                       >
                         ⚖️
                       </button>
+                      {/* ✅ NUEVO: Botón de eliminar */}
+                      {canDelete && (
+                        <button
+                          onClick={() => handleDeleteRepuesto(repuesto)}
+                          className={`action-btn delete-btn ${isSuperAdmin ? 'super-admin-delete' : ''}`}
+                          title={isSuperAdmin ? "🔥 Eliminación Forzada (Super Admin)" : "Eliminar Repuesto"}
+                        >
+                          {isSuperAdmin ? '🔥' : '🗑️'}
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

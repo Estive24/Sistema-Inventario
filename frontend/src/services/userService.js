@@ -1,5 +1,6 @@
 class UserService {
   constructor() {
+    // ✅ Mantener tu URL base existente
     this.baseURL = '/api/setup';
   }
 
@@ -32,7 +33,7 @@ class UserService {
     return await response.json();
   }
 
-  // ========== GESTIÓN DE USUARIOS ==========
+  // ========== GESTIÓN DE USUARIOS (COMPATIBLE CON TU ESTRUCTURA) ==========
   async getUsers(filters = {}) {
     const params = new URLSearchParams();
     
@@ -58,6 +59,19 @@ class UserService {
       method: 'PUT',
       body: userData
     });
+  }
+
+  // ✅ NUEVO MÉTODO - Eliminar usuario
+  async deleteUser(userId) {
+    try {
+      console.log('🗑️ Eliminando usuario ID:', userId);
+      return await this.request(`/users/${userId}/delete/`, {
+        method: 'DELETE'
+      });
+    } catch (error) {
+      console.error('❌ Error en deleteUser:', error);
+      throw error;
+    }
   }
 
   async getSystemRoles() {

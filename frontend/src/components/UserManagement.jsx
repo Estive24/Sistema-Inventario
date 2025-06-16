@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { userService } from '../services/userService';
+import DeleteUserModal from './DeleteUserModal'; // ✅ IMPORTAR el modal de eliminación
 import './UserManagement.css';
 
 const UserManagement = ({ onBack }) => {
@@ -15,12 +16,25 @@ const UserManagement = ({ onBack }) => {
   });
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [userToDelete, setUserToDelete] = useState(null); // ✅ NUEVO estado para modal de eliminación
   const [notification, setNotification] = useState(null);
+
+  // ✅ AGREGAR estado del usuario actual
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     loadUsers();
     loadRoles();
+    loadCurrentUser(); // ✅ CARGAR usuario actual
   }, [filters]);
+
+  // ✅ NUEVA función para cargar usuario actual
+  const loadCurrentUser = () => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setCurrentUser(JSON.parse(userData));
+    }
+  };
 
   const loadUsers = async () => {
     setLoading(true);
@@ -69,6 +83,34 @@ const UserManagement = ({ onBack }) => {
     showNotification('Usuario actualizado exitosamente');
   };
 
+  // ✅ NUEVA función para manejar eliminación exitosa
+  const handleUserDeleted = (deletedUser) => {
+    setUserToDelete(null);
+    loadUsers();
+    showNotification(`Usuario "${deletedUser.username}" eliminado exitosamente`);
+  };
+
+  // ✅ NUEVA función para verificar si se puede eliminar un usuario
+  const canDeleteUser = (user) => {
+    // No puede eliminar su propia cuenta
+    if (currentUser && currentUser.id === user.id) {
+      return false;
+    }
+    
+    // Si es super admin, verificar que no sea el último
+    if (user.is_superuser) {
+      const superAdminCount = users.filter(u => u.is_superuser).length;
+      return superAdminCount > 1;
+    }
+    
+    return true;
+  };
+
+  // ✅ NUEVA función para verificar si el usuario actual es super admin
+  const isSuperAdmin = () => {
+    return currentUser && currentUser.is_superuser;
+  };
+
   const getRoleBadgeClass = (roleKey) => {
     const classes = {
       'SUPER_ADMIN': 'role-badge role-super-admin',
@@ -105,6 +147,7 @@ const UserManagement = ({ onBack }) => {
           <button
             onClick={() => setShowCreateModal(true)}
             className="create-user-button"
+            disabled={!isSuperAdmin()} // ✅ Solo super admin puede crear
           >
             + Nuevo Usuario
           </button>
@@ -210,6 +253,19 @@ const UserManagement = ({ onBack }) => {
                               ? `${user.first_name} ${user.last_name}`.trim()
                               : user.username
                             }
+                            {/* ✅ Indicador de usuario actual */}
+                            {currentUser && user.id === currentUser.id && (
+                              <span style={{
+                                background: '#2563eb',
+                                color: 'white',
+                                fontSize: '10px',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                marginLeft: '8px'
+                              }}>
+                                (Tú)
+                              </span>
+                            )}
                           </div>
                           <div className="user-meta">
                             @{user.username}
@@ -235,12 +291,44 @@ const UserManagement = ({ onBack }) => {
                       {formatDate(user.date_joined)}
                     </td>
                     <td>
-                      <button
-                        onClick={() => setEditingUser(user)}
-                        className="edit-button"
-                      >
-                        Editar
-                      </button>
+                      <div style={{display: 'flex', gap: '8px'}}>
+                        <button
+                          onClick={() => setEditingUser(user)}
+                          className="edit-button"
+                          disabled={!isSuperAdmin()}
+                          title="Editar usuario"
+                        >
+                          ✏️
+                        </button>
+                        
+                        {/* ✅ BOTÓN DE ELIMINAR - Solo para super admin */}
+                        {isSuperAdmin() && (
+                          <button
+                            onClick={() => setUserToDelete(user)}
+                            disabled={!canDeleteUser(user)}
+                            title={
+                              !canDeleteUser(user) 
+                                ? (user.id === currentUser?.id 
+                                    ? 'No puedes eliminar tu propia cuenta' 
+                                    : 'No se puede eliminar el último super administrador')
+                                : 'Eliminar usuario'
+                            }
+                            style={{
+                              padding: '6px 8px',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: canDeleteUser(user) ? 'pointer' : 'not-allowed',
+                              fontSize: '14px',
+                              background: canDeleteUser(user) ? '#fee2e2' : '#f3f4f6',
+                              color: canDeleteUser(user) ? '#dc2626' : '#9ca3af',
+                              opacity: canDeleteUser(user) ? 1 : 0.5,
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            🗑️
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -297,11 +385,23 @@ const UserManagement = ({ onBack }) => {
           onUserUpdated={handleUserUpdated}
         />
       )}
+
+      {/* ✅ NUEVO MODAL - Modal de eliminación */}
+      {userToDelete && (
+        <DeleteUserModal
+          user={userToDelete}
+          onClose={() => setUserToDelete(null)}
+          onUserDeleted={handleUserDeleted}
+        />
+      )}
     </div>
   );
 };
 
-// Create User Modal Component
+// ✅ Mantener tus modales existentes (CreateUserModal y EditUserModal)
+// Aquí puedes mantener tu código existente para estos modales
+
+// Create User Modal Component (mantener tu implementación existente)
 const CreateUserModal = ({ roles, onClose, onUserCreated }) => {
   const [formData, setFormData] = useState({
     username: '',
@@ -461,7 +561,8 @@ const CreateUserModal = ({ roles, onClose, onUserCreated }) => {
     </div>
   );
 };
-// Edit User Modal Component
+
+// Edit User Modal Component (mantener tu implementación existente)
 const EditUserModal = ({ user, roles, onClose, onUserUpdated }) => {
   const [formData, setFormData] = useState({
     username: user.username,

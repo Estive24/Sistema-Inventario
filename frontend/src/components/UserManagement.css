@@ -646,3 +646,109 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ✅ ESTILOS ADICIONALES PARA BOTÓN DE ELIMINAR */
+/* Agregar al final de tu UserManagement.css existente */
+
+/* Estilo mejorado para botones de acción */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.edit-button,
+.delete-button {
+  padding: 6px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-button {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.edit-button:hover:not(:disabled) {
+  background: #bfdbfe;
+}
+
+.edit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+/* Estilos específicos para el modal de eliminación */
+.danger-alert {
+  background: #fef2f2;
+  border: 2px solid #fca5a5;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 12px;
+}
+
+.danger-icon {
+  font-size: 24px;
+  color: #dc2626;
+}
+
+.danger-content strong {
+  color: #991b1b;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.danger-content p {
+  margin: 0;
+  color: #991b1b;
+  font-size: 14px;
+}
+
+/* Botón de eliminar en modal */
+.submit-button.danger {
+  background: #dc2626 !important;
+  color: white !important;
+}
+
+.submit-button.danger:hover:not(:disabled) {
+  background: #b91c1c !important;
+}
+
+/* Indicador de usuario actual */
+.current-user-row {
+  background: #eff6ff;
+}
+
+.current-user-badge {
+  background: #2563eb;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+/* Responsive para botones de acción */
+@media (max-width: 768px) {
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .edit-button,
+  .delete-button {
+    width: 100%;
+    justify-content: center;
+  }
+}

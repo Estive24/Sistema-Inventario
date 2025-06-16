@@ -1326,3 +1326,440 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Agregar estos estilos al archivo InventoryManagement.css existente */
+
+/* BOTÓN DE ELIMINAR */
+.delete-btn {
+  background: #fee2e2;
+  color: #dc2626;
+  transition: all 0.2s;
+}
+
+.delete-btn:hover {
+  background: #fecaca;
+  color: #b91c1c;
+  transform: scale(1.05);
+}
+
+.delete-btn:active {
+  transform: scale(0.95);
+}
+
+/* MEJORAR BOTONES DE ACCIÓN EXISTENTES */
+.action-buttons {
+  display: flex;
+  gap: 6px; /* Reducir gap para acomodar más botones */
+}
+
+.action-btn {
+  padding: 6px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  min-width: 32px; /* Ancho mínimo para consistencia */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Efectos hover mejorados para todos los botones */
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.action-btn:active {
+  transform: translateY(0);
+}
+
+/* BOTONES DE ACCIÓN ESPECÍFICOS - Mejorados */
+.edit-btn {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.edit-btn:hover {
+  background: #bfdbfe;
+  color: #1e40af;
+}
+
+.entrada-btn {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.entrada-btn:hover {
+  background: #a7f3d0;
+  color: #047857;
+}
+
+.ajuste-btn {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.ajuste-btn:hover {
+  background: #fde68a;
+  color: #78350f;
+}
+
+/* ESTADO DESHABILITADO PARA BOTONES */
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.action-btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* TOOLTIPS MEJORADOS */
+.action-btn[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-bottom: 4px;
+}
+
+.action-btn[title]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #1f2937;
+  z-index: 1000;
+}
+
+.action-btn {
+  position: relative;
+}
+
+/* RESPONSIVE - Ajustar botones en pantallas pequeñas */
+@media (max-width: 768px) {
+  .action-buttons {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  
+  .action-btn {
+    padding: 4px 6px;
+    font-size: 12px;
+    min-width: 28px;
+  }
+  
+  /* Ocultar algunos botones en móvil si hay espacio limitado */
+  .action-btn[title]:hover::after,
+  .action-btn[title]:hover::before {
+    display: none;
+  }
+}
+
+/* ESTADO DE CARGA PARA BOTONES */
+.action-btn.loading {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.action-btn.loading::before {
+  content: '⏳';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+}
+
+/* ANIMACIONES SUAVES */
+@keyframes buttonPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.action-btn.success {
+  animation: buttonPulse 0.3s ease-in-out;
+}
+
+/* ACCESIBILIDAD */
+.action-btn:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.action-btn:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* CONTRASTE MEJORADO PARA MODO OSCURO (futuro) */
+@media (prefers-color-scheme: dark) {
+  .delete-btn {
+    background: #7f1d1d;
+    color: #fca5a5;
+  }
+  
+  .delete-btn:hover {
+    background: #991b1b;
+    color: #f87171;
+  }
+}
+
+/* Agregar estos estilos al archivo InventoryManagement.css existente */
+
+/* BOTÓN DE ELIMINAR */
+.delete-btn {
+  background: #fee2e2;
+  color: #dc2626;
+  transition: all 0.2s;
+}
+
+.delete-btn:hover {
+  background: #fecaca;
+  color: #b91c1c;
+  transform: scale(1.05);
+}
+
+.delete-btn:active {
+  transform: scale(0.95);
+}
+
+/* 🔥 BOTÓN ESPECIAL PARA SUPER ADMIN */
+.super-admin-delete {
+  background: linear-gradient(135deg, #7f1d1d, #991b1b) !important;
+  color: #fca5a5 !important;
+  border: 1px solid #dc2626;
+  font-weight: bold;
+  position: relative;
+  overflow: hidden;
+}
+
+.super-admin-delete:hover {
+  background: linear-gradient(135deg, #991b1b, #b91c1c) !important;
+  color: #f87171 !important;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+.super-admin-delete::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #dc2626, #f59e0b, #dc2626);
+  border-radius: 6px;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.super-admin-delete:hover::before {
+  opacity: 1;
+  animation: glow 1.5s infinite;
+}
+
+@keyframes glow {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* Tooltip especial para Super Admin */
+.super-admin-delete[title]:hover::after {
+  background: #7f1d1d !important;
+  color: #fca5a5 !important;
+  border: 1px solid #dc2626;
+  font-weight: bold;
+}
+
+.super-admin-delete[title]:hover::before {
+  border-top-color: #7f1d1d !important;
+}
+
+/* MEJORAR BOTONES DE ACCIÓN EXISTENTES */
+.action-buttons {
+  display: flex;
+  gap: 6px; /* Reducir gap para acomodar más botones */
+}
+
+.action-btn {
+  padding: 6px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  min-width: 32px; /* Ancho mínimo para consistencia */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Efectos hover mejorados para todos los botones */
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.action-btn:active {
+  transform: translateY(0);
+}
+
+/* BOTONES DE ACCIÓN ESPECÍFICOS - Mejorados */
+.edit-btn {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.edit-btn:hover {
+  background: #bfdbfe;
+  color: #1e40af;
+}
+
+.entrada-btn {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.entrada-btn:hover {
+  background: #a7f3d0;
+  color: #047857;
+}
+
+.ajuste-btn {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.ajuste-btn:hover {
+  background: #fde68a;
+  color: #78350f;
+}
+
+/* ESTADO DESHABILITADO PARA BOTONES */
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.action-btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* TOOLTIPS MEJORADOS */
+.action-btn[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-bottom: 4px;
+}
+
+.action-btn[title]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #1f2937;
+  z-index: 1000;
+}
+
+.action-btn {
+  position: relative;
+}
+
+/* RESPONSIVE - Ajustar botones en pantallas pequeñas */
+@media (max-width: 768px) {
+  .action-buttons {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  
+  .action-btn {
+    padding: 4px 6px;
+    font-size: 12px;
+    min-width: 28px;
+  }
+  
+  /* Ocultar algunos botones en móvil si hay espacio limitado */
+  .action-btn[title]:hover::after,
+  .action-btn[title]:hover::before {
+    display: none;
+  }
+}
+
+/* ESTADO DE CARGA PARA BOTONES */
+.action-btn.loading {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.action-btn.loading::before {
+  content: '⏳';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+}
+
+/* ANIMACIONES SUAVES */
+@keyframes buttonPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.action-btn.success {
+  animation: buttonPulse 0.3s ease-in-out;
+}
+
+/* ACCESIBILIDAD */
+.action-btn:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.action-btn:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* CONTRASTE MEJORADO PARA MODO OSCURO (futuro) */
+@media (prefers-color-scheme: dark) {
+  .delete-btn {
+    background: #7f1d1d;
+    color: #fca5a5;
+  }
+  
+  .delete-btn:hover {
+    background: #991b1b;
+    color: #f87171;
+  }
+}

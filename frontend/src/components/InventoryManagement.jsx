@@ -8,6 +8,7 @@ import CreateRepuestoModal from './CreateRepuestoModal';
 import EditRepuestoModal from './EditRepuestoModal';
 import EntradaStockModal from './EntradaStockModal';
 import AjusteStockModal from './AjusteStockModal';
+import DeleteRepuestoModal from './DeleteRepuestoModal'; // ✅ NUEVO: Importar modal de eliminación
 import './InventoryManagement.css';
 
 const InventoryManagement = ({ onBack }) => {
@@ -20,9 +21,11 @@ const InventoryManagement = ({ onBack }) => {
   const [editingRepuesto, setEditingRepuesto] = useState(null);
   const [showEntradaModal, setShowEntradaModal] = useState(false);
   const [showAjusteModal, setShowAjusteModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // ✅ NUEVO: Estado para modal de eliminación
   const [selectedRepuesto, setSelectedRepuesto] = useState(null);
+  const [deletingRepuesto, setDeletingRepuesto] = useState(null); // ✅ NUEVO: Repuesto a eliminar
 
-  // Estados para datos - INICIALIZAR CON VALORES VACÍOS PERO DEFINIDOS
+  // Estados para datos
   const [estadisticas, setEstadisticas] = useState({
     total_repuestos: 0,
     repuestos_activos: 0,
@@ -44,7 +47,6 @@ const InventoryManagement = ({ onBack }) => {
     try {
       console.log('🔄 Solicitando estadísticas y alertas...');
       
-      // MEJORADO: Cargar datos por separado para mejor debugging
       let statsResponse = null;
       let alertasResponse = null;
       
@@ -68,7 +70,7 @@ const InventoryManagement = ({ onBack }) => {
         showNotification('Error cargando alertas: ' + alertasError.message, 'error');
       }
       
-      // MEJORADO: Actualizar estados solo si tenemos datos válidos
+      // Actualizar estados
       if (statsResponse && typeof statsResponse === 'object') {
         console.log('📊 Actualizando estadísticas en estado...');
         
@@ -93,7 +95,6 @@ const InventoryManagement = ({ onBack }) => {
         console.log('🚨 Actualizando contador de alertas:', alertasCount);
         setAlertasCount(alertasCount);
       } else if (alertasResponse && typeof alertasResponse === 'object' && alertasResponse.results) {
-        // Si viene paginado
         const alertasCount = Array.isArray(alertasResponse.results) ? alertasResponse.results.length : 0;
         console.log('🚨 Actualizando contador de alertas (paginado):', alertasCount);
         setAlertasCount(alertasCount);
@@ -109,7 +110,6 @@ const InventoryManagement = ({ onBack }) => {
       console.error('❌ Error general cargando datos del dashboard:', error);
       showNotification('Error general cargando datos: ' + error.message, 'error');
       
-      // En caso de error general, mantener valores por defecto
       setEstadisticas({
         total_repuestos: 0,
         repuestos_activos: 0,
@@ -155,50 +155,39 @@ const InventoryManagement = ({ onBack }) => {
     loadDashboardData();
   };
 
-  // OPCIONAL: Función de debug manual (mantener para emergencias)
-  const handleDebugData = async () => {
-    console.log('=== DEBUG MANUAL INICIADO ===');
-    console.log('Estado actual de estadísticas:', estadisticas);
-    console.log('Estado actual de alertasCount:', alertasCount);
-    
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        showNotification('No hay token de autenticación', 'error');
-        return;
-      }
+  // ✅ NUEVO: Manejar eliminación
+  const handleDeleteClick = (repuesto) => {
+    console.log('🗑️ Iniciando eliminación de repuesto:', repuesto.nombre);
+    setDeletingRepuesto(repuesto);
+    setShowDeleteModal(true);
+  };
 
-      const response = await fetch('http://localhost:8000/api/inventario/repuestos/estadisticas/', {
-        headers: {
-          'Authorization': `Token ${token}`,
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      console.log('✅ Fetch directo exitoso:', data);
-      
-      // Actualizar estado directamente
-      const newStats = {
-        total_repuestos: Number(data.total_repuestos) || 0,
-        repuestos_activos: Number(data.repuestos_activos) || 0,
-        alertas_stock_bajo: Number(data.alertas_stock_bajo) || 0,
-        valor_total_inventario: Number(data.valor_total_inventario) || 0,
-        repuestos_sin_stock: Number(data.repuestos_sin_stock) || 0
-      };
-      
-      setEstadisticas(newStats);
-      console.log('✅ Estado actualizado via debug');
-      showNotification('Debug completado - datos actualizados', 'success');
-    } catch (error) {
-      console.error('❌ Error en debug fetch:', error);
-      showNotification('Error en debug: ' + error.message, 'error');
+  const handleRepuestoDeleted = (repuesto, result) => {
+    console.log('✅ Repuesto eliminado exitosamente:', result);
+    setShowDeleteModal(false);
+    setDeletingRepuesto(null);
+    
+    // 🔥 NOTIFICACIÓN ESPECIAL para Super Admin eliminación forzada
+    if (result.forced_deletion) {
+      const deletedItems = result.deleted_items || {};
+      showNotification(
+        `🔥 ELIMINACIÓN FORZADA: "${repuesto.nombre}" eliminado por Super Admin. ` +
+        `Stock perdido: ${deletedItems.stock_perdido || 0}, ` +
+        `Movimientos eliminados: ${deletedItems.movimientos || 0}, ` +
+        `Alertas eliminadas: ${deletedItems.alertas || 0}`,
+        'success'
+      );
+    } else {
+      // Notificación normal para Encargado de Bodega
+      showNotification(`Repuesto "${repuesto.nombre}" eliminado exitosamente`);
     }
+    
+    loadDashboardData();
+  };
+
+  const handleDeleteModalClose = () => {
+    setShowDeleteModal(false);
+    setDeletingRepuesto(null);
   };
 
   const renderCurrentView = () => {
@@ -224,6 +213,7 @@ const InventoryManagement = ({ onBack }) => {
               setSelectedRepuesto(repuesto);
               setShowAjusteModal(true);
             }}
+            onDelete={handleDeleteClick} // ✅ NUEVO: Pasar handler de eliminación
           />
         );
       case 'movimientos':
@@ -253,7 +243,6 @@ const InventoryManagement = ({ onBack }) => {
             <h1>Gestión de Inventario</h1>
             <p>Control de repuestos y stock</p>
             
-            {/* Debug info en desarrollo */}
             {process.env.NODE_ENV === 'development' && (
               <small style={{display: 'block', color: '#6b7280', fontSize: '11px'}}>
                 Debug: {estadisticas.total_repuestos} repuestos | {alertasCount} alertas | 
@@ -281,17 +270,6 @@ const InventoryManagement = ({ onBack }) => {
             >
               {loading ? '⏳' : '🔄'} Actualizar
             </button>
-            
-            {/* Botón de debug en desarrollo */}
-            {process.env.NODE_ENV === 'development' && (
-              <button
-                onClick={handleDebugData}
-                className="action-button debug-button"
-                style={{background: '#7c3aed', color: 'white'}}
-              >
-                🔧 Debug
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -365,7 +343,7 @@ const InventoryManagement = ({ onBack }) => {
         {renderCurrentView()}
       </div>
 
-      {/* Modales */}
+      {/* Modales existentes */}
       {showCreateModal && (
         <CreateRepuestoModal
           onClose={() => setShowCreateModal(false)}
@@ -400,6 +378,15 @@ const InventoryManagement = ({ onBack }) => {
             setSelectedRepuesto(null);
           }}
           onSuccess={handleAjusteSuccess}
+        />
+      )}
+
+      {/* ✅ NUEVO: Modal de eliminación */}
+      {showDeleteModal && deletingRepuesto && (
+        <DeleteRepuestoModal
+          repuesto={deletingRepuesto}
+          onClose={handleDeleteModalClose}
+          onRepuestoDeleted={handleRepuestoDeleted}
         />
       )}
     </div>

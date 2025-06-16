@@ -555,3 +555,67 @@ def verify_token(request):
             'role_display': role_display,
         }
     }, status=status.HTTP_200_OK)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_user(request, user_id):
+    """
+    Eliminar usuario - Solo para super admin con validaciones de seguridad
+    """
+    requesting_user = request.user
+    
+    # ✅ VERIFICACIÓN 1: Solo super administradores
+    if not requesting_user.is_superuser:
+        return Response(
+            {'error': 'Solo los super administradores pueden eliminar usuarios'}, 
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    try:
+        target_user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response(
+            {'error': 'Usuario no encontrado'}, 
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # ✅ VERIFICACIÓN 2: No auto-eliminación
+    if requesting_user.id == target_user.id:
+        return Response(
+            {'error': 'No puedes eliminar tu propia cuenta'}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # ✅ VERIFICACIÓN 3: Proteger último super admin
+    if target_user.is_superuser:
+        super_admin_count = User.objects.filter(is_superuser=True).count()
+        if super_admin_count <= 1:
+            return Response(
+                {'error': 'No se puede eliminar el último super administrador del sistema'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    try:
+        username = target_user.username
+        
+        # ✅ ELIMINACIÓN SEGURA: Usar transacción
+        with transaction.atomic():
+            # Eliminar token de autenticación si existe
+            try:
+                target_user.auth_token.delete()
+            except:
+                pass  # No hay token o ya fue eliminado
+            
+            # Eliminar usuario
+            target_user.delete()
+        
+        return Response({
+            'message': f'Usuario "{username}" eliminado exitosamente',
+            'deleted_user_id': user_id
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Error eliminando usuario: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

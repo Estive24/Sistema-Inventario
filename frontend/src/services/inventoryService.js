@@ -151,17 +151,92 @@ class InventoryService {
     }
   }
 
-  async deleteRepuesto(id) {
+  // ========== ELIMINACIÓN DE REPUESTOS ==========
+  async validateDeleteRepuesto(id) {
     try {
-      console.log('🗑️ Eliminando repuesto ID:', id);
-      return await this.request(`/repuestos/${id}/`, {
-        method: 'DELETE'
-      });
+      console.log('🔍 Validando eliminación de repuesto ID:', id);
+      const result = await this.request(`/repuestos/${id}/validate_delete/`);
+      console.log('✅ Validación completada:', result);
+      return result;
     } catch (error) {
-      console.error('❌ Error en deleteRepuesto:', error);
+      console.error('❌ Error validando eliminación:', error);
       throw error;
     }
   }
+
+
+  async deleteRepuesto(id) {
+    try {
+      console.log('🗑️ Eliminando repuesto ID:', id);
+      const result = await this.request(`/repuestos/${id}/`, {
+        method: 'DELETE'
+      });
+      console.log('✅ Repuesto eliminado:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Error eliminando repuesto:', error);
+      throw error;
+    }
+  }
+
+// Método helper para verificar permisos de eliminación
+  canUserDeleteRepuestos() {
+    try {
+      const userData = localStorage.getItem('user');
+      if (!userData) return false;
+      
+      const user = JSON.parse(userData);
+      
+      // Verificar diferentes formas de permisos
+      const isSuperUser = user.is_superuser === true || user.is_superuser === 'true';
+      const isSuperAdmin = user.rol === 'SUPER_ADMIN' || user.role === 'SUPER_ADMIN';
+      const isEncargadoBodega = user.rol === 'ENCARGADO_BODEGA' || user.role === 'ENCARGADO_BODEGA';
+      
+      // Verificar también grupos si están disponibles
+      const hasDeleteGroup = user.groups && Array.isArray(user.groups) && 
+        user.groups.some(group => ['Encargado de Bodega'].includes(group));
+      
+      console.log('🔍 Verificando permisos de eliminación:', {
+        user: user.username,
+        isSuperUser,
+        isSuperAdmin,
+        isEncargadoBodega,
+        hasDeleteGroup,
+        result: isSuperUser || isSuperAdmin || isEncargadoBodega || hasDeleteGroup
+      });
+      
+      return isSuperUser || isSuperAdmin || isEncargadoBodega || hasDeleteGroup;
+    } catch (error) {
+      console.error('❌ Error verificando permisos:', error);
+      return false;
+    }
+  }
+
+  // 🔥 NUEVO: Método para verificar si es Super Administrador
+  isSuperAdmin() {
+    try {
+      const userData = localStorage.getItem('user');
+      if (!userData) return false;
+      
+      const user = JSON.parse(userData);
+      
+      const isSuperUser = user.is_superuser === true || user.is_superuser === 'true';
+      const isSuperAdmin = user.rol === 'SUPER_ADMIN' || user.role === 'SUPER_ADMIN';
+      
+      console.log('🔥 Verificando Super Admin:', {
+        user: user.username,
+        isSuperUser,
+        isSuperAdmin,
+        result: isSuperUser || isSuperAdmin
+      });
+      
+      return isSuperUser || isSuperAdmin;
+    } catch (error) {
+      console.error('❌ Error verificando Super Admin:', error);
+      return false;
+    }
+  }
+
 
   async getEstadisticas() {
     try {
