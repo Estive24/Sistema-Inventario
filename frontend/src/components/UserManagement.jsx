@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { userService } from '../services/userService';
-import DeleteUserModal from './DeleteUserModal'; // ✅ IMPORTAR el modal de eliminación
+import { useDebounce } from '../hooks/useDebounce'; // ✅ IMPORTAR el hook
 import './UserManagement.css';
 
 const UserManagement = ({ onBack }) => {
@@ -8,33 +8,39 @@ const UserManagement = ({ onBack }) => {
   const [pagination, setPagination] = useState({});
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState([]);
+  
+  // ✅ SEPARAR filtros de búsqueda de filtros de petición
+  const [searchTerm, setSearchTerm] = useState(''); // Estado local para el input
   const [filters, setFilters] = useState({
     page: 1,
     page_size: 10,
-    search: '',
+    search: '', // Este será el que se usa para la petición
     role: ''
   });
+  
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [userToDelete, setUserToDelete] = useState(null); // ✅ NUEVO estado para modal de eliminación
   const [notification, setNotification] = useState(null);
 
-  // ✅ AGREGAR estado del usuario actual
-  const [currentUser, setCurrentUser] = useState(null);
+  // ✅ APLICAR debounce al término de búsqueda
+  const debouncedSearchTerm = useDebounce(searchTerm, 500); // 500ms de delay
 
+  // ✅ CARGAR usuarios solo cuando cambien los filtros de petición
   useEffect(() => {
     loadUsers();
-    loadRoles();
-    loadCurrentUser(); // ✅ CARGAR usuario actual
+    if (filters.page === 1) { // Solo cargar roles en la primera página
+      loadRoles();
+    }
   }, [filters]);
 
-  // ✅ NUEVA función para cargar usuario actual
-  const loadCurrentUser = () => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setCurrentUser(JSON.parse(userData));
-    }
-  };
+  // ✅ ACTUALIZAR filtros cuando cambie el término de búsqueda con debounce
+  useEffect(() => {
+    setFilters(prev => ({ 
+      ...prev, 
+      search: debouncedSearchTerm,
+      page: 1 // Resetear a página 1 cuando se busque
+    }));
+  }, [debouncedSearchTerm]);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -63,8 +69,14 @@ const UserManagement = ({ onBack }) => {
     setTimeout(() => setNotification(null), 5000);
   };
 
+  // ✅ ACTUALIZAR solo filtros no relacionados con búsqueda
   const handleFilterChange = (newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
+  };
+
+  // ✅ MANEJAR cambio del input de búsqueda
+  const handleSearchChange = (value) => {
+    setSearchTerm(value); // Solo actualizar el estado local
   };
 
   const handlePageChange = (page) => {
@@ -81,34 +93,6 @@ const UserManagement = ({ onBack }) => {
     setEditingUser(null);
     loadUsers();
     showNotification('Usuario actualizado exitosamente');
-  };
-
-  // ✅ NUEVA función para manejar eliminación exitosa
-  const handleUserDeleted = (deletedUser) => {
-    setUserToDelete(null);
-    loadUsers();
-    showNotification(`Usuario "${deletedUser.username}" eliminado exitosamente`);
-  };
-
-  // ✅ NUEVA función para verificar si se puede eliminar un usuario
-  const canDeleteUser = (user) => {
-    // No puede eliminar su propia cuenta
-    if (currentUser && currentUser.id === user.id) {
-      return false;
-    }
-    
-    // Si es super admin, verificar que no sea el último
-    if (user.is_superuser) {
-      const superAdminCount = users.filter(u => u.is_superuser).length;
-      return superAdminCount > 1;
-    }
-    
-    return true;
-  };
-
-  // ✅ NUEVA función para verificar si el usuario actual es super admin
-  const isSuperAdmin = () => {
-    return currentUser && currentUser.is_superuser;
   };
 
   const getRoleBadgeClass = (roleKey) => {
@@ -147,7 +131,6 @@ const UserManagement = ({ onBack }) => {
           <button
             onClick={() => setShowCreateModal(true)}
             className="create-user-button"
-            disabled={!isSuperAdmin()} // ✅ Solo super admin puede crear
           >
             + Nuevo Usuario
           </button>
@@ -169,10 +152,16 @@ const UserManagement = ({ onBack }) => {
             <input
               type="text"
               placeholder="Buscar por nombre, usuario o email..."
-              value={filters.search}
-              onChange={(e) => handleFilterChange({ search: e.target.value })}
+              value={searchTerm} // ✅ USAR estado local
+              onChange={(e) => handleSearchChange(e.target.value)} // ✅ NUEVA función
               disabled={loading}
             />
+            {/* ✅ OPCIONAL: Mostrar indicador de búsqueda */}
+            {searchTerm !== debouncedSearchTerm && (
+              <small style={{color: '#6b7280', fontSize: '12px'}}>
+                Buscando...
+              </small>
+            )}
           </div>
           <div className="page-size-group">
             <label>Por página</label>
@@ -253,19 +242,6 @@ const UserManagement = ({ onBack }) => {
                               ? `${user.first_name} ${user.last_name}`.trim()
                               : user.username
                             }
-                            {/* ✅ Indicador de usuario actual */}
-                            {currentUser && user.id === currentUser.id && (
-                              <span style={{
-                                background: '#2563eb',
-                                color: 'white',
-                                fontSize: '10px',
-                                padding: '2px 6px',
-                                borderRadius: '4px',
-                                marginLeft: '8px'
-                              }}>
-                                (Tú)
-                              </span>
-                            )}
                           </div>
                           <div className="user-meta">
                             @{user.username}
@@ -291,44 +267,12 @@ const UserManagement = ({ onBack }) => {
                       {formatDate(user.date_joined)}
                     </td>
                     <td>
-                      <div style={{display: 'flex', gap: '8px'}}>
-                        <button
-                          onClick={() => setEditingUser(user)}
-                          className="edit-button"
-                          disabled={!isSuperAdmin()}
-                          title="Editar usuario"
-                        >
-                          ✏️
-                        </button>
-                        
-                        {/* ✅ BOTÓN DE ELIMINAR - Solo para super admin */}
-                        {isSuperAdmin() && (
-                          <button
-                            onClick={() => setUserToDelete(user)}
-                            disabled={!canDeleteUser(user)}
-                            title={
-                              !canDeleteUser(user) 
-                                ? (user.id === currentUser?.id 
-                                    ? 'No puedes eliminar tu propia cuenta' 
-                                    : 'No se puede eliminar el último super administrador')
-                                : 'Eliminar usuario'
-                            }
-                            style={{
-                              padding: '6px 8px',
-                              border: 'none',
-                              borderRadius: '4px',
-                              cursor: canDeleteUser(user) ? 'pointer' : 'not-allowed',
-                              fontSize: '14px',
-                              background: canDeleteUser(user) ? '#fee2e2' : '#f3f4f6',
-                              color: canDeleteUser(user) ? '#dc2626' : '#9ca3af',
-                              opacity: canDeleteUser(user) ? 1 : 0.5,
-                              transition: 'all 0.2s'
-                            }}
-                          >
-                            🗑️
-                          </button>
-                        )}
-                      </div>
+                      <button
+                        onClick={() => setEditingUser(user)}
+                        className="edit-button"
+                      >
+                        Editar
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -385,23 +329,13 @@ const UserManagement = ({ onBack }) => {
           onUserUpdated={handleUserUpdated}
         />
       )}
-
-      {/* ✅ NUEVO MODAL - Modal de eliminación */}
-      {userToDelete && (
-        <DeleteUserModal
-          user={userToDelete}
-          onClose={() => setUserToDelete(null)}
-          onUserDeleted={handleUserDeleted}
-        />
-      )}
     </div>
   );
 };
 
-// ✅ Mantener tus modales existentes (CreateUserModal y EditUserModal)
-// Aquí puedes mantener tu código existente para estos modales
-
-// Create User Modal Component (mantener tu implementación existente)
+// ===============================
+// CREATE USER MODAL COMPONENT
+// ===============================
 const CreateUserModal = ({ roles, onClose, onUserCreated }) => {
   const [formData, setFormData] = useState({
     username: '',
@@ -562,7 +496,9 @@ const CreateUserModal = ({ roles, onClose, onUserCreated }) => {
   );
 };
 
-// Edit User Modal Component (mantener tu implementación existente)
+// ===============================
+// EDIT USER MODAL COMPONENT
+// ===============================
 const EditUserModal = ({ user, roles, onClose, onUserUpdated }) => {
   const [formData, setFormData] = useState({
     username: user.username,

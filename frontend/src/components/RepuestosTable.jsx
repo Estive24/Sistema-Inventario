@@ -1,32 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import { inventoryService } from '../services/inventoryService';
+import { useDebounce } from '../hooks/useDebounce'; // ✅ IMPORTAR el hook
 
 const RepuestosTable = ({ 
   onCreateNew, 
   onEdit, 
   onEntradaStock, 
   onAjusteStock, 
-  onDelete // ✅ NUEVO: Agregar prop para manejar eliminación
+  onDelete
 }) => {
   const [repuestos, setRepuestos] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // ✅ SEPARAR filtros de búsqueda de filtros de petición
+  const [searchTerm, setSearchTerm] = useState(''); // Estado local para el input
   const [filters, setFilters] = useState({
-    search: '',
+    search: '', // Este será el que se usa para la petición
     activo: '',
     necesita_reposicion: ''
   });
 
   // ✅ NUEVO: Verificar permisos de eliminación
   const [canDelete, setCanDelete] = useState(false);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false); // 🔥 NUEVO
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
+  // ✅ APLICAR debounce al término de búsqueda
+  const debouncedSearchTerm = useDebounce(searchTerm, 500); // 500ms de delay
+
+  // ✅ CARGAR repuestos solo cuando cambien los filtros de petición
   useEffect(() => {
     loadRepuestos();
-    
-    // ✅ NUEVO: Verificar permisos al montar el componente
-    setCanDelete(inventoryService.canUserDeleteRepuestos());
-    setIsSuperAdmin(inventoryService.isSuperAdmin()); // 🔥 NUEVO
   }, [filters]);
+
+  // ✅ VERIFICAR permisos solo una vez al montar
+  useEffect(() => {
+    setCanDelete(inventoryService.canUserDeleteRepuestos());
+    setIsSuperAdmin(inventoryService.isSuperAdmin());
+  }, []); // Array vacío = solo al montar
+
+  // ✅ ACTUALIZAR filtros cuando cambie el término de búsqueda con debounce
+  useEffect(() => {
+    setFilters(prev => ({ 
+      ...prev, 
+      search: debouncedSearchTerm
+    }));
+  }, [debouncedSearchTerm]);
 
   const loadRepuestos = async () => {
     setLoading(true);
@@ -40,8 +58,14 @@ const RepuestosTable = ({
     }
   };
 
+  // ✅ ACTUALIZAR solo filtros no relacionados con búsqueda
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  // ✅ MANEJAR cambio del input de búsqueda
+  const handleSearchChange = (value) => {
+    setSearchTerm(value); // Solo actualizar el estado local
   };
 
   const getStockStatusClass = (repuesto) => {
@@ -65,7 +89,7 @@ const RepuestosTable = ({
     }).format(value);
   };
 
-  // ✅ NUEVO: Función para manejar eliminación
+  // ✅ FUNCIÓN para manejar eliminación
   const handleDeleteRepuesto = (repuesto) => {
     if (!canDelete) {
       alert('No tienes permisos para eliminar repuestos');
@@ -92,10 +116,16 @@ const RepuestosTable = ({
             <input
               type="text"
               placeholder="Buscar por nombre, marca, código..."
-              value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
+              value={searchTerm} // ✅ USAR estado local
+              onChange={(e) => handleSearchChange(e.target.value)} // ✅ NUEVA función
               className="search-input"
             />
+            {/* ✅ OPCIONAL: Mostrar indicador de búsqueda */}
+            {searchTerm !== debouncedSearchTerm && (
+              <small style={{color: '#6b7280', fontSize: '12px', marginTop: '4px', display: 'block'}}>
+                Buscando...
+              </small>
+            )}
           </div>
           <div className="filter-group">
             <select
@@ -208,7 +238,7 @@ const RepuestosTable = ({
                       >
                         ⚖️
                       </button>
-                      {/* ✅ NUEVO: Botón de eliminar */}
+                      {/* Botón de eliminar */}
                       {canDelete && (
                         <button
                           onClick={() => handleDeleteRepuesto(repuesto)}
