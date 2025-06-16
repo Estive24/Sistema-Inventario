@@ -41,62 +41,48 @@ const LoginPage = ({ onLoginSuccess }) => {
     return newErrors;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
+// 🔍 DEBUG: Agrega esto en tu LoginPage.jsx para verificar qué datos llegan
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setErrors({});
+
+  try {
+    const response = await fetch('/api/auth/login/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(formData),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      
+      // 🔍 DEBUG: Ver qué datos devuelve el servidor
+      console.log('Datos de login completos:', data);
+      console.log('Usuario completo:', data.user);
+      console.log('is_superuser value:', data.user?.is_superuser);
+      console.log('rol value:', data.user?.rol);
+      
+      // Guardar en localStorage
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
+      onLoginSuccess(data);
+    } else {
+      const errorData = await response.json();
+      setErrors(errorData.errors || { general: errorData.error || 'Error de login' });
     }
-
-    setLoading(true);
-    setErrors({});
-
-    try {
-      const response = await fetch('/api/auth/login/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: formData.username,
-          password: formData.password
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Guardar token en localStorage
-        if (data.token) {
-          localStorage.setItem('token', data.token);
-          
-          // Guardar datos del usuario
-          if (data.user) {
-            localStorage.setItem('user', JSON.stringify(data.user));
-          }
-          
-          console.log('Login exitoso:', data);
-          
-          // Notificar al componente padre que el login fue exitoso
-          if (onLoginSuccess) {
-            onLoginSuccess(data);
-          }
-        }
-      } else {
-        const data = await response.json();
-        setErrors({ 
-          general: data.error || data.detail || data.message || 'Credenciales incorrectas' 
-        });
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      setErrors({ general: 'Error de conexión. Intente nuevamente.' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (error) {
+    console.error('Error de conexión:', error);
+    setErrors({ general: 'Error de conexión. Intente nuevamente.' });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="login-container">
@@ -155,6 +141,7 @@ const LoginPage = ({ onLoginSuccess }) => {
         <div className="login-footer">
           <p>Usuario de prueba: <strong>admin</strong></p>
           <p>¿Problemas para acceder? Contacte al administrador del sistema.</p>
+          <p>Desarrollado por IntelNat.</p>
         </div>
       </div>
     </div>

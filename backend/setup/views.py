@@ -271,12 +271,25 @@ def create_user(request):
             if role == 'SUPER_ADMIN':
                 user.is_superuser = True
                 user.is_staff = True
+                user.rol = 'SUPER_ADMIN' 
                 user.save()
+                print(f"✅ Usuario {username} creado como SUPER_ADMIN")
             else:
-                # Crear grupo si no existe y asignar
-                group_name = SYSTEM_ROLES[role]
-                group, created = Group.objects.get_or_create(name=group_name)
-                user.groups.add(group)
+                # Limpiar grupos existentes
+                user.groups.clear()
+                
+                # Obtener nombre del grupo desde SYSTEM_ROLES
+                group_name = SYSTEM_ROLES.get(role)
+                print(f"🔍 Buscando grupo: {group_name} para rol: {role}")
+                
+                if group_name:
+                    group, created = Group.objects.get_or_create(name=group_name)
+                    user.groups.add(group)
+                    print(f"✅ Usuario {username} asignado al grupo: {group_name}")
+                    user.rol = role 
+                    user.save()
+                else:
+                    print(f"❌ Rol no encontrado: {role}")
             
             return Response({
                 'success': True,
@@ -284,12 +297,8 @@ def create_user(request):
                 'user': {
                     'id': user.id,
                     'username': user.username,
-                    'email': user.email,
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
                     'role': role,
-                    'role_display': SYSTEM_ROLES[role] if role != 'SUPER_ADMIN' else 'Super Administrador',
-                    'is_active': user.is_active,
+                    'groups': [g.name for g in user.groups.all()]  # 🔍 Para debug
                 }
             }, status=status.HTTP_201_CREATED)
             
@@ -372,16 +381,21 @@ def update_user(request, user_id):
                 user.groups.clear()
                 user.is_superuser = False
                 user.is_staff = False
+                user.rol = role 
                 
                 if role == 'SUPER_ADMIN':
                     user.is_superuser = True
                     user.is_staff = True
                 else:
-                    group_name = SYSTEM_ROLES[role]
-                    group, created = Group.objects.get_or_create(name=group_name)
-                    user.groups.add(group)
-            
-            user.save()
+                    group_name = SYSTEM_ROLES.get(role)
+                    if group_name: # Asegúrate de que el nombre del grupo se encontró
+                        group, created = Group.objects.get_or_create(name=group_name)
+                        user.groups.add(group)
+                    else:
+                        # Opcional: imprimir una advertencia si se recibe un rol no válido
+                        print(f"Advertencia: Rol '{role}' no válido o no encontrado en SYSTEM_ROLES para la actualización del usuario.")
+                
+            user.save() # Esto guardará todos los cambios, incluyendo el campo 'rol'
             
             return Response({
                 'success': True,
@@ -451,13 +465,22 @@ def login_view(request):
             
             if not user.is_superuser:
                 user_groups = user.groups.all()
+                print(f"🔍 Usuario: {user.username}")
+                print(f"📋 Grupos: {[g.name for g in user_groups]}")
+    
                 if user_groups:
                     group = user_groups.first()
+                    print(f"🎯 Primer grupo: {group.name}")
+        
                     for key, value in SYSTEM_ROLES.items():
+                        print(f"🔄 Comparando: '{value}' == '{group.name}' -> {value == group.name}")
                         if value == group.name:
                             role = key
                             role_display = value
+                            print(f"✅ Rol asignado: {role} ({role_display})")
                             break
+                    else:
+                        print(f"❌ Sin grupos asignados")
             
             return Response({
                 'token': token.key,

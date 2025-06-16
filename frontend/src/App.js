@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-
-// Importar componentes
 import LoginPage from './components/LoginPage';
+import UserManagement from './components/UserManagement';
+import InventoryManagement from './components/InventoryManagement';
 
 function BasicAdminSetup() {
   const [formData, setFormData] = useState({
@@ -222,8 +222,10 @@ function BasicAdminSetup() {
   );
 }
 
+// COMPONENTE DASHBOARD MEJORADO CON GESTIÓN DE USUARIOS E INVENTARIO
 function Dashboard() {
   const [user, setUser] = useState(null);
+  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'users', 'inventory'
 
   useEffect(() => {
     // Obtener datos del usuario del localStorage
@@ -242,6 +244,99 @@ function Dashboard() {
     window.location.reload();
   };
 
+  const canManageUsers = () => {
+    if (!user) return false;
+  
+    // ✅ Verificar diferentes formas de superuser
+  const isSuperUser = user.is_superuser === true || user.is_superuser === 'true';
+  const isSuperAdmin = user.rol === 'SUPER_ADMIN' || user.role === 'SUPER_ADMIN';
+  
+    console.log('DEBUG canManageUsers:', {
+      user: user.username,
+      is_superuser: user.is_superuser,
+      rol: user.rol,
+      isSuperUser,
+      isSuperAdmin,
+      result: isSuperUser || isSuperAdmin
+    });
+  
+     return isSuperUser || isSuperAdmin;
+  };
+
+
+const canManageInventory = () => {
+  if (!user) return false;
+  
+  // ✅ Verificar diferentes formas de permisos
+  const isSuperUser = user.is_superuser === true || user.is_superuser === 'true';
+  const isSuperAdmin = user.rol === 'SUPER_ADMIN' || user.role === 'SUPER_ADMIN';
+  const isSupervisor = user.rol === 'SUPERVISOR' || user.role === 'SUPERVISOR';
+  const isEncargadoBodega = user.rol === 'ENCARGADO_BODEGA' || user.role === 'ENCARGADO_BODEGA';
+  
+  // Verificar también grupos si están disponibles
+  const hasInventoryGroup = user.groups && Array.isArray(user.groups) && 
+    user.groups.some(group => ['Supervisor', 'Encargado de Bodega'].includes(group));
+  
+  console.log('DEBUG canManageInventory:', {
+    user: user.username,
+    is_superuser: user.is_superuser,
+    rol: user.rol,
+    groups: user.groups,
+    isSuperUser,
+    isSuperAdmin,
+    isSupervisor,
+    isEncargadoBodega,
+    hasInventoryGroup,
+    result: isSuperUser || isSuperAdmin || isSupervisor || isEncargadoBodega || hasInventoryGroup
+  });
+  
+  return isSuperUser || isSuperAdmin || isSupervisor || isEncargadoBodega || hasInventoryGroup;
+};
+
+// ✅ AGREGAR: Función para debug de usuario
+  const debugUser = () => {
+  const userData = localStorage.getItem('user');
+  if (userData) {
+    const parsedUser = JSON.parse(userData);
+    console.log('=== DEBUG USUARIO COMPLETO ===');
+    console.log('Raw localStorage user:', userData);
+    console.log('Parsed user:', parsedUser);
+    console.log('is_superuser type:', typeof parsedUser.is_superuser);
+    console.log('is_superuser value:', parsedUser.is_superuser);
+    console.log('rol:', parsedUser.rol);
+    console.log('groups:', parsedUser.groups);
+    console.log('=============================');
+  }
+  };
+
+// ✅ Llamar debug al cargar
+  useEffect(() => {
+  const userData = localStorage.getItem('user');
+  if (userData) {
+    const parsedUser = JSON.parse(userData);
+    setUser(parsedUser);
+    debugUser(); // ✅ Agregar esta línea
+  }
+  }, []);
+  // Si estamos en vista de gestión de usuarios
+  if (currentView === 'users') {
+    return (
+      <UserManagement 
+        onBack={() => setCurrentView('dashboard')}
+      />
+    );
+  }
+
+  // Si estamos en vista de gestión de inventario
+  if (currentView === 'inventory') {
+    return (
+      <InventoryManagement 
+        onBack={() => setCurrentView('dashboard')}
+      />
+    );
+  }
+
+  // Vista del dashboard principal
   return (
     <div className="dashboard-container">
       <div className="dashboard-card">
@@ -250,13 +345,37 @@ function Dashboard() {
           <div className="user-info">
             <p>Hola, <strong>{user.first_name || user.username}</strong></p>
             <p>Email: {user.email}</p>
-            <p>Rol: {user.is_superuser ? 'Super Administrador' : 'Usuario'}</p>
+            <p>Rol: {user.role_display || (user.is_superuser ? 'Super Administrador' : 'Usuario')}</p>
           </div>
         )}
         
+        {/* ACCIONES DE GESTIÓN */}
         <div className="dashboard-actions">
+          {canManageUsers() && (
+            <button 
+              onClick={() => setCurrentView('users')} 
+              className="action-button users-button"
+            >
+              👥 Gestionar Usuarios
+            </button>
+          )}
+          
+          {canManageInventory() && (
+            <button 
+              onClick={() => setCurrentView('inventory')} 
+              className="action-button inventory-button"
+            >
+              📦 Gestión de Inventario
+            </button>
+          )}
+          
+          <button className="action-button reports-button" disabled>
+            📊 Reportes
+            <span className="coming-soon">(Próximamente)</span>
+          </button>
+          
           <button onClick={handleLogout} className="logout-button">
-            Cerrar Sesión
+            🚪 Cerrar Sesión
           </button>
         </div>
         
@@ -267,7 +386,9 @@ function Dashboard() {
             <li>✅ Super-administrador configurado</li>
             <li>✅ Sistema de autenticación activo</li>
             <li>✅ Login funcional</li>
-            <li>🔄 Próximo: Gestión de usuarios y inventario</li>
+            <li>✅ Gestión de usuarios implementada</li>
+            <li>✅ Gestión de inventario implementada</li>
+            <li>🔄 Próximo: Módulo de reportes</li>
           </ul>
         </div>
       </div>
