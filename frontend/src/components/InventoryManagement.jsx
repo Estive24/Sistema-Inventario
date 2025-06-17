@@ -9,6 +9,7 @@ import EditRepuestoModal from './EditRepuestoModal';
 import EntradaStockModal from './EntradaStockModal';
 import AjusteStockModal from './AjusteStockModal';
 import DeleteRepuestoModal from './DeleteRepuestoModal'; // ✅ NUEVO: Importar modal de eliminación
+import './MovimientosTable.css'; 
 import './InventoryManagement.css';
 
 const InventoryManagement = ({ onBack }) => {
@@ -191,46 +192,48 @@ const InventoryManagement = ({ onBack }) => {
   };
 
   const renderCurrentView = () => {
-    switch (currentView) {
-      case 'dashboard':
-        return (
-          <InventoryDashboard 
-            estadisticas={estadisticas}
-            alertasCount={alertasCount}
-            onViewChange={setCurrentView}
-          />
-        );
-      case 'repuestos':
-        return (
-          <RepuestosTable 
-            onCreateNew={() => setShowCreateModal(true)}
-            onEdit={setEditingRepuesto}
-            onEntradaStock={(repuesto) => {
-              setSelectedRepuesto(repuesto);
-              setShowEntradaModal(true);
-            }}
-            onAjusteStock={(repuesto) => {
-              setSelectedRepuesto(repuesto);
-              setShowAjusteModal(true);
-            }}
-            onDelete={handleDeleteClick} // ✅ NUEVO: Pasar handler de eliminación
-          />
-        );
-      case 'movimientos':
-        return <MovimientosTable />;
-      case 'alertas':
-        return <AlertasPanel onAlertaResuelta={loadDashboardData} />;
-      default:
-        return (
-          <InventoryDashboard 
-            estadisticas={estadisticas} 
-            alertasCount={alertasCount}
-            onViewChange={setCurrentView}
-          />
-        );
-    }
+  switch (currentView) {
+    case 'dashboard':
+      return (
+        <InventoryDashboard 
+          estadisticas={estadisticas}
+          alertasCount={alertasCount}
+          onViewChange={setCurrentView}
+        />
+      );
+    case 'repuestos':
+      return (
+        <RepuestosTable 
+          onCreateNew={() => setShowCreateModal(true)}
+          onEdit={setEditingRepuesto}
+          onEntradaStock={(repuesto) => {
+            setSelectedRepuesto(repuesto);
+            setShowEntradaModal(true);
+          }}
+          onAjusteStock={(repuesto) => {
+            setSelectedRepuesto(repuesto);
+            setShowAjusteModal(true);
+          }}
+          onDelete={handleDeleteClick}
+        />
+      );
+    case 'movimientos':
+      // ✅ ACTUALIZADO: Usar el componente mejorado sin props adicionales
+      // porque ahora maneja toda la lógica internamente
+      return <MovimientosTable />;
+    case 'alertas':
+      return <AlertasPanel onAlertaResuelta={loadDashboardData} />;
+    default:
+      return (
+        <InventoryDashboard 
+          estadisticas={estadisticas} 
+          alertasCount={alertasCount}
+          onViewChange={setCurrentView}
+        />
+      );
+  }
   };
-
+  
   return (
     <div className="inventory-management-container">
       {/* Header */}

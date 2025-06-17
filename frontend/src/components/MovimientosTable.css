@@ -1,0 +1,853 @@
+/* ESTILOS PARA BÚSQUEDA AVANZADA DE MOVIMIENTOS */
+
+/* Header mejorado */
+.table-header {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.header-title-section {
+  margin-bottom: 24px;
+}
+
+.header-title-section h2 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  color: #1f2937;
+}
+
+.header-title-section p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* Búsqueda principal */
+.main-search-section {
+  margin-bottom: 20px;
+}
+
+.search-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 600px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: #6b7280;
+  font-size: 16px;
+  z-index: 1;
+}
+
+.main-search-input {
+  width: 100%;
+  padding: 12px 16px 12px 40px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.2s;
+  background: #f9fafb;
+}
+
+.main-search-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 8px;
+  background: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.clear-search-btn:hover {
+  background: #4b5563;
+}
+
+/* Indicador de búsqueda */
+.search-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.loading-spinner.small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #2563eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Controles de filtros simplificados */
+.filter-controls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  transition: all 0.2s;
+}
+
+.filter-toggle-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.filter-toggle-btn.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.toggle-icon {
+  font-size: 12px;
+  transition: transform 0.2s;
+}
+
+.filter-toggle-btn.active .toggle-icon {
+  transform: rotate(90deg);
+}
+
+.clear-filters-btn {
+  padding: 10px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.clear-filters-btn:hover:not(:disabled) {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.clear-filters-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Botón Excel profesional con estados */
+.export-excel-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: 2px solid #0f7b0f;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #0f7b0f 0%, #157915 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(15, 123, 15, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.export-excel-btn:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.export-excel-btn:hover:not(:disabled):before {
+  left: 100%;
+}
+
+.export-excel-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0d6a0d 0%, #0f7b0f 100%);
+  border-color: #0d6a0d;
+  box-shadow: 0 6px 20px rgba(15, 123, 15, 0.4);
+  transform: translateY(-2px);
+}
+
+.export-excel-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(15, 123, 15, 0.3);
+}
+
+/* Estado de exportación (cargando) */
+.export-excel-btn.exporting {
+  background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);
+  border-color: #6b7280;
+  cursor: wait;
+  transform: none;
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.3);
+}
+
+.export-excel-btn:disabled {
+  background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);
+  border-color: #6b7280;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.2);
+  opacity: 0.8;
+}
+
+/* Spinner de carga para el botón */
+.export-excel-btn .loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 4px;
+}
+
+/* Estados hover mejorados */
+.filter-toggle-btn, 
+.clear-filters-btn, 
+.export-excel-btn:not(.exporting), 
+.quick-filter-btn,
+.pagination-btn {
+  transform: translateY(0);
+  transition: all 0.2s ease;
+}
+
+.filter-toggle-btn:hover, 
+.export-excel-btn:hover:not(:disabled):not(.exporting),
+.quick-filter-btn:hover,
+.pagination-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+/* Mejoras de accesibilidad */
+.filter-toggle-btn:focus,
+.clear-filters-btn:focus,
+.export-excel-btn:focus,
+.main-search-input:focus,
+.filter-select:focus,
+.filter-input:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.filter-toggle-btn:focus:not(:focus-visible),
+.clear-filters-btn:focus:not(:focus-visible),
+.export-excel-btn:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Tooltip mejorado para botón Excel */
+.export-excel-btn[title]:hover:after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: normal;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-bottom: 8px;
+}
+
+.export-excel-btn[title]:hover:before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #1f2937;
+  margin-bottom: 2px;
+}
+
+/* Responsive para botón Excel */
+@media (max-width: 768px) {
+  .export-excel-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  
+  .filter-controls {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .export-excel-btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  
+  .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* Filtros avanzados */
+.advanced-filters {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.filter-select, .filter-input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.filter-select:focus, .filter-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Filtros rápidos */
+.quick-filters {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
+}
+
+.quick-filters h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #374151;
+  font-weight: 600;
+}
+
+.quick-filter-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.quick-filter-btn {
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.quick-filter-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #9ca3af;
+}
+
+/* Resumen de resultados */
+.results-summary {
+  background: white;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.results-info {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 14px;
+}
+
+.results-count {
+  color: #374151;
+  font-weight: 500;
+}
+
+.search-term {
+  color: #2563eb;
+}
+
+.active-filters {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.export-info {
+  background: #ecfdf5;
+  color: #047857;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Estado vacío mejorado */
+.empty-state {
+  background: white;
+  border-radius: 8px;
+  padding: 60px 20px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.6;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px 0;
+  color: #374151;
+  font-size: 18px;
+}
+
+.empty-state p {
+  margin: 0 0 20px 0;
+  color: #6b7280;
+  font-size: 14px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.empty-state-info {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.empty-state-info p {
+  margin: 0;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Mejoras a la tabla */
+.movimientos-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.movimientos-table th {
+  background: #f9fafb;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #6b7280;
+  letter-spacing: 0.05em;
+  padding: 16px;
+  text-align: left;
+  border-bottom: 2px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.movimientos-table td {
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: top;
+}
+
+.movimientos-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+/* Estilos específicos de celdas existentes mejorados */
+.fecha-cell {
+  font-size: 13px;
+  color: #6b7280;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+}
+
+.tipo-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tipo-icon {
+  font-size: 16px;
+}
+
+.tipo-text {
+  font-weight: 500;
+  color: #374151;
+}
+
+.repuesto-cell .repuesto-name {
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.cantidad {
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+}
+
+.stock-change {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.usuario-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.usuario-name {
+  font-weight: 500;
+  color: #374151;
+}
+
+.autorizado-por {
+  font-size: 11px;
+  color: #dc2626;
+  font-style: italic;
+  background: #fef2f2;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #fecaca;
+}
+
+.detalles-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 200px;
+}
+
+.detalle-item {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.detalle-item strong {
+  color: #374151;
+  font-weight: 600;
+}
+
+.observaciones {
+  background: #f9fafb;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-style: italic;
+  border-left: 3px solid #d1d5db;
+}
+
+/* Paginación mejorada */
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-top: 12px;
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pagination-btn {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  color: #374151;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f9fafb;
+}
+
+.page-indicator {
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
+  padding: 0 8px;
+}
+
+/* Estados de movimientos (colores de borde) */
+.movimiento-entrada {
+  border-left: 4px solid #059669;
+}
+
+.movimiento-salida {
+  border-left: 4px solid #dc2626;
+}
+
+.movimiento-neutral {
+  border-left: 4px solid #6b7280;
+}
+
+/* Cantidad con colores */
+.cantidad.movimiento-entrada {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.cantidad.movimiento-salida {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.cantidad.movimiento-neutral {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* Estado de acceso denegado */
+.access-denied {
+  background: white;
+  border-radius: 8px;
+  padding: 60px 20px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filters-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .results-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .pagination {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .pagination-controls {
+    justify-content: center;
+  }
+  
+  .main-search-input {
+    font-size: 16px; /* Evitar zoom en iOS */
+  }
+  
+  .detalles-cell {
+    max-width: none;
+  }
+  
+  .movimientos-table {
+    font-size: 14px;
+  }
+  
+  .movimientos-table th,
+  .movimientos-table td {
+    padding: 12px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .quick-filter-buttons {
+    flex-direction: column;
+  }
+  
+  .quick-filter-btn {
+    justify-content: center;
+  }
+  
+  .search-input-group {
+    max-width: none;
+  }
+}
+
+/* Animaciones de carga */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #2563eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Efectos hover mejorados */
+.filter-toggle-btn, 
+.clear-filters-btn, 
+.export-excel-btn, 
+.quick-filter-btn,
+.pagination-btn {
+  transform: translateY(0);
+  transition: all 0.2s ease;
+}
+
+.filter-toggle-btn:hover, 
+.export-excel-btn:hover:not(:disabled),
+.quick-filter-btn:hover,
+.pagination-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Mejoras de accesibilidad */
+.filter-toggle-btn:focus,
+.clear-filters-btn:focus,
+.export-excel-btn:focus,
+.main-search-input:focus,
+.filter-select:focus,
+.filter-input:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.filter-toggle-btn:focus:not(:focus-visible),
+.clear-filters-btn:focus:not(:focus-visible),
+.export-excel-btn:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Tooltips para botones */
+[title] {
+  position: relative;
+}
+
+/* Estados de hover para filas de tabla */
+.movimientos-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.movimientos-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* Indicadores visuales para filtros activos */
+.filter-select:not([value=""]),
+.filter-input:not([value=""]) {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
